@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<body>
+		<canvas id="canvas" width="800" height="600" style="border: 1px solid red;"></canvas>
+	</body>
+</html>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script>
+	var canvas = document.getElementById('canvas');
+//	var ctx = canvas.getContext('2d');
+	function Clock(opt) {
+		if(!opt) throw new Error('请提供参数');
+		var requireArgs = 'bigX,bigY,bigR,canvas'.split(',');
+		requireArgs.forEach(function(v) {
+			if(!opt.hasOwnProperty(v)) throw new Error('请提供参数'+v);
+		});
+		var defalutOpt = {
+			bigColor: '#335F9A',
+			bigLineWidth:2
+		};
+		$.extend(this,defalutOpt,opt);
+		this.ctx = this.canvas.getContext('2d');
+		this.ctx.font="20px 微软雅黑";
+        this.ctx.textAlign="center";
+        this.ctx.textBaseline="middle";
+		this.init();
+	};
+	Clock.prototype = {
+		constructor: Clock,
+		init: function() {
+			var self = this;
+			var timer = setInterval(function() {
+				self.ctx.clearRect(0,0,canvas.width,canvas.height);
+				self.drawBig();
+				self.drawLine();
+				self.drawZhen();
+				self.ctx.fillText((new Date()).toLocaleString(),300,100);
+			},1000)
+			
+			
+		},
+		//绘制外壳：
+		drawBig: function() {
+			this.ctx.beginPath();
+			this.ctx.strokeStyle = this.bigColor;
+			this.ctx.lineWidth = this.bigLineWidth;
+			this.ctx.arc(this.bigX,this.bigY,this.bigR,0,2*Math.PI);
+			this.ctx.stroke();
+		},
+		//绘制刻度线
+		drawLine: function() {
+			this.ctx.strokeStyle = 'black';
+			var startR = -Math.PI/3;
+			for(var i=0; i<60; i++) {
+				var length = this.tick[i%5==0?'big':'small'].length;
+				var width = this.tick[i%5==0?'big':'small'].width;
+				var radian = startR + 2*Math.PI/60*i;
+				var x1 = Math.cos(radian)*(this.bigR-this.bigLineWidth/2) + this.bigX;
+				var y1 = Math.sin(radian)*(this.bigR-this.bigLineWidth/2) + this.bigY;
+				var x2 = Math.cos(radian)*(this.bigR - length) + this.bigX;
+				var y2 = Math.sin(radian)*(this.bigR - length) + this.bigY;
+				this.ctx.beginPath();
+				this.ctx.lineWidth = width;
+				this.ctx.moveTo(x1,y1);
+				this.ctx.lineTo(x2,y2);
+				this.ctx.stroke();
+				if(i%5==0) {
+					this.drawTxt(i/5+1,radian);
+				}
+			}
+		},
+		//绘制文字
+		drawTxt: function(text,radian) {
+			var x = Math.cos(radian)*(110) + this.bigX;
+			var y = Math.sin(radian)*(110) + this.bigY;
+			this.ctx.fillText(text,x,y);
+		},
+		//绘制指针
+		drawZhen: function() {
+			//
+			var data = new Date();
+			var hour = data.getHours()%12;
+			var minute = data.getMinutes();
+			var second= data.getSeconds();
+			
+			var secondR = second*2*Math.PI/60 - Math.PI/2;
+			var secondLength = 50;
+			this.drawSinglePoint(secondR,secondLength,'red');
+			var minuteR = minute*2*Math.PI/60 - Math.PI/2;
+			var minuteLength = 30;
+			this.drawSinglePoint(minuteR,minuteLength,'blue');
+			var hourR = hour*2*Math.PI/12 - Math.PI/2;
+			var hourLength = 20;
+			this.drawSinglePoint(hourR,hourLength,'black');
+			
+			
+		},
+		drawSinglePoint: function(radian,length,color) {
+			var x = Math.cos(radian)*length + this.bigX;
+			var y = Math.sin(radian)*length + this.bigY;
+			this.ctx.beginPath();
+			this.ctx.strokeStyle = color;
+			this.ctx.moveTo(this.bigX,this.bigY);
+			this.ctx.lineTo(x,y);
+			this.ctx.stroke();
+		}
+	}
+	var clock = new Clock({
+		canvas:canvas,
+		bigX:300,
+		bigY:300,
+		bigR:150,
+		bigColor:"#335F9A",
+        bigLineWidth:10,
+		tick: {
+			small:{
+				length:15,
+				width:4
+			},
+			big:{
+				length:26,
+				width:8
+			}
+		}
+	})
+</script>
